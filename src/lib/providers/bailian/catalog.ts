@@ -6,7 +6,12 @@ const BAILIAN_CATALOG: Readonly<Record<OfficialModelModality, readonly string[]>
     'qwen3.5-plus',
     'qwen3.5-flash',
   ],
-  image: [],
+  image: [
+    'wan2.6-image',
+    'wan2.7-image-pro',
+    'wanx2.1-t2i-turbo',
+    'wanx2.1-t2i-plus',
+  ],
   video: [
     'wan2.7-i2v',
     'wan2.6-i2v-flash',

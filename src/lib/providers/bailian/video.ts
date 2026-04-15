@@ -35,6 +35,15 @@ const BAILIAN_FIRST_LAST_FRAME_CAPABLE_MODELS = new Set([
   'wan2.7-i2v',
 ])
 
+// wan2.7-i2v 使用新版多模态 API 协议（media 数组格式）
+const BAILIAN_NEW_PROTOCOL_MODELS = new Set([
+  'wan2.7-i2v',
+])
+
+function usesNewProtocol(modelId: string): boolean {
+  return BAILIAN_NEW_PROTOCOL_MODELS.has(modelId)
+}
+
 interface BailianVideoSubmitResponse {
   request_id?: string
   code?: string
@@ -53,9 +62,14 @@ interface BailianVideoSubmitParameters {
   duration?: number
 }
 
+interface BailianVideoSubmitMediaItem {
+  type: string
+  url: string
+}
+
 interface BailianVideoSubmitBody {
   model: string
-  input: Record<string, string>
+  input: Record<string, string | BailianVideoSubmitMediaItem[]>
   parameters?: BailianVideoSubmitParameters
 }
 
@@ -134,6 +148,52 @@ function buildSubmitRequest(params: BailianVideoGenerateParams): {
   const promptExtend = readOptionalBoolean(params.options.promptExtend)
   const duration = readOptionalPositiveInteger(params.options.duration, 'duration')
 
+  // wan2.7-i2v 使用新版多模态 API（media 数组格式）
+  if (usesNewProtocol(modelId)) {
+    const media: Array<{ type: string; url: string }> = [
+      { type: 'first_frame', url: firstFrameUrl },
+    ]
+    if (firstLastFrame) {
+      media.push({ type: 'last_frame', url: toFetchableUrl(lastFrameImageUrl) })
+    }
+
+    const submitBody: BailianVideoSubmitBody = {
+      model: modelId,
+      input: {
+        media,
+      },
+    }
+    if (prompt) {
+      submitBody.input.prompt = prompt
+    }
+
+    const submitParameters: BailianVideoSubmitParameters = {}
+    if (resolution) {
+      submitParameters.resolution = resolution
+    }
+    if (size) {
+      submitParameters.size = size
+    }
+    if (typeof watermark === 'boolean') {
+      submitParameters.watermark = watermark
+    }
+    if (typeof promptExtend === 'boolean') {
+      submitParameters.prompt_extend = promptExtend
+    }
+    if (typeof duration === 'number') {
+      submitParameters.duration = duration
+    }
+    if (Object.keys(submitParameters).length > 0) {
+      submitBody.parameters = submitParameters
+    }
+
+    return {
+      endpoint: BAILIAN_VIDEO_ENDPOINT,
+      body: submitBody,
+    }
+  }
+
+  // 旧版模型使用扁平 input 格式
   const submitBody: BailianVideoSubmitBody = {
     model: modelId,
     input: firstLastFrame
