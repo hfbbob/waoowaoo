@@ -139,6 +139,7 @@ export async function waitExternalResult(
         durationMs: Date.now() - startAt,
         details: {
           externalId,
+          fullError: status.error,
         },
       })
       throw new Error(status.error || `External task failed: ${externalId}`)

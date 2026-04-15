@@ -65,6 +65,26 @@ export async function generateImage(
     _ulogInfo(`[generateImage] resolved model selection: ${selection.modelKey}`)
     const providerConfig = await getProviderConfig(userId, selection.provider)
     const providerKey = getProviderKey(selection.provider).toLowerCase()
+
+    // 🔥 DashScope 兼容检测：openai-compatible provider 使用 DashScope URL 时走原生 API
+    const isDashscopeCompat = providerKey === 'openai-compatible'
+        && providerConfig.baseUrl?.includes('dashscope.aliyuncs.com') === true
+    if (isDashscopeCompat && selection.mediaType === 'image') {
+        _ulogInfo(`[generateImage] 检测到 DashScope 兼容 provider，走 bailian 原生 API: ${selection.modelKey}`)
+        return await generateBailianImage({
+            userId,
+            prompt,
+            referenceImages: options?.referenceImages,
+            options: {
+                ...(options || {}),
+                provider: 'bailian',
+                modelId: selection.modelId,
+                modelKey: selection.modelKey,
+            },
+        })
+    }
+    // Note: video handling moved to generateVideo()
+
     if (providerKey === 'bailian') {
         return await generateBailianImage({
             userId,

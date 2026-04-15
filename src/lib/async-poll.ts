@@ -747,6 +747,19 @@ function readBailianTaskQueryMediaUrl(data: BailianTaskQueryResponse): {
         return { mediaUrl: imageUrl, imageUrl }
     }
 
+    // 🔥 wan2.7-image 异步任务返回格式
+    const choices = (output as Record<string, unknown>)?.choices as Array<Record<string, unknown>> | undefined
+    if (choices && Array.isArray(choices) && choices.length > 0) {
+        const message = choices[0].message as Record<string, unknown> | undefined
+        const msgContent = message?.content as Array<Record<string, unknown>> | undefined
+        if (msgContent && Array.isArray(msgContent) && msgContent.length > 0) {
+            const img = msgContent[0].image as string | undefined
+            if (typeof img === 'string' && img.trim()) {
+                return { mediaUrl: img.trim(), imageUrl: img.trim() }
+            }
+        }
+    }
+
     const firstResult = Array.isArray(output?.results) ? output.results[0] : undefined
     if (!firstResult || typeof firstResult !== 'object') {
         return {}
@@ -758,10 +771,6 @@ function readBailianTaskQueryMediaUrl(data: BailianTaskQueryResponse): {
     const firstImageUrl = typeof firstResult.image_url === 'string' ? firstResult.image_url.trim() : ''
     if (firstImageUrl) {
         return { mediaUrl: firstImageUrl, imageUrl: firstImageUrl }
-    }
-    const firstUrl = typeof firstResult.url === 'string' ? firstResult.url.trim() : ''
-    if (firstUrl) {
-        return { mediaUrl: firstUrl }
     }
 
     return {}
@@ -803,18 +812,22 @@ async function pollBailianTask(requestId: string, userId: string): Promise<PollR
         const resolvedCode = outputCode || topLevelCode
         const resolvedMessage = outputMessage || topLevelMessage
 
+        const taskStatus = (typeof data.output?.task_status === 'string'
+            ? data.output.task_status
+            : typeof data.task_status === 'string'
+                ? data.task_status
+                : '').trim().toUpperCase()
+
+        // 🔥 调试日志：打印百炼查询完整返回
+        _ulogInfo(`[Bailian Poll] task_id=${requestId}, status=${taskStatus}, outputCode=${outputCode}, outputMessage=${outputMessage}, topLevelCode=${topLevelCode}, topLevelMessage=${topLevelMessage}`)
+        _ulogInfo(`[Bailian Poll] full response: ${JSON.stringify(data)}`)
+
         if (!response.ok) {
             return {
                 status: 'failed',
                 error: `Bailian: 查询失败 ${response.status} ${resolvedCode || resolvedMessage}`.trim(),
             }
         }
-
-        const taskStatus = (typeof data.output?.task_status === 'string'
-            ? data.output.task_status
-            : typeof data.task_status === 'string'
-                ? data.task_status
-                : '').trim().toUpperCase()
 
         if (taskStatus === 'FAILED' || taskStatus === 'CANCELED' || taskStatus === 'CANCELLED') {
             return {
