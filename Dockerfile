@@ -2,6 +2,9 @@
 FROM node:20-alpine AS deps
 WORKDIR /app
 
+# 🔥 中国网络优化：使用 npmmirror 镜像
+RUN npm config set registry https://registry.npmmirror.com
+
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 RUN npm ci
