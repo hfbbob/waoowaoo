@@ -26,12 +26,7 @@ function assertRegistered(modelId: string): void {
 
 const BAILIAN_VIDEO_ENDPOINT = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/video-generation/video-synthesis'
 const BAILIAN_KF2V_ENDPOINT = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/image2video/video-synthesis'
-const BAILIAN_FIRST_LAST_FRAME_ONLY_MODELS = new Set([
-  'wan2.2-kf2v-flash',
-  'wanx2.1-kf2v-plus',
-])
 const BAILIAN_FIRST_LAST_FRAME_CAPABLE_MODELS = new Set([
-  ...BAILIAN_FIRST_LAST_FRAME_ONLY_MODELS,
   'wan2.7-i2v',
 ])
 
@@ -93,10 +88,6 @@ function supportsFirstLastFrame(modelId: string): boolean {
   return BAILIAN_FIRST_LAST_FRAME_CAPABLE_MODELS.has(modelId)
 }
 
-function isFirstLastFrameOnlyModel(modelId: string): boolean {
-  return BAILIAN_FIRST_LAST_FRAME_ONLY_MODELS.has(modelId)
-}
-
 function assertNoUnsupportedOptions(options: BailianGenerateRequestOptions): void {
   const allowedOptionKeys = new Set([
     'provider',
@@ -134,9 +125,6 @@ function buildSubmitRequest(params: BailianVideoGenerateParams): {
   const firstFrameUrl = toFetchableUrl(imageUrl)
   const lastFrameImageUrl = readTrimmedString(params.options.lastFrameImageUrl)
   const firstLastFrame = !!lastFrameImageUrl
-  if (isFirstLastFrameOnlyModel(modelId) && !firstLastFrame) {
-    throw new Error('BAILIAN_VIDEO_LAST_FRAME_IMAGE_URL_REQUIRED')
-  }
   if (firstLastFrame && !supportsFirstLastFrame(modelId)) {
     throw new Error(`BAILIAN_VIDEO_LAST_FRAME_UNSUPPORTED_FOR_MODEL: ${modelId}`)
   }

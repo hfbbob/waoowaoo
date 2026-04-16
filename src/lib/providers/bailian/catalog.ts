@@ -7,19 +7,15 @@ const BAILIAN_CATALOG: Readonly<Record<OfficialModelModality, readonly string[]>
     'qwen3.5-flash',
   ],
   image: [
-    'wan2.6-image',
     'wan2.7-image-pro',
-    'wanx2.1-t2i-turbo',
-    'wanx2.1-t2i-plus',
+    'wan2.7-image',
+    'wan2.6-image',
   ],
   video: [
     'wan2.7-i2v',
     'wan2.6-i2v-flash',
     'wan2.6-i2v',
     'wan2.5-i2v-preview',
-    'wan2.2-i2v-plus',
-    'wan2.2-kf2v-flash',
-    'wanx2.1-kf2v-plus',
   ],
   audio: [
     'qwen3-tts-vd-2026-01-26',

@@ -7,7 +7,6 @@ describe('bailian video capabilities catalog', () => {
       'wan2.6-i2v-flash',
       'wan2.6-i2v',
       'wan2.5-i2v-preview',
-      'wan2.2-i2v-plus',
     ]
 
     for (const modelId of models) {
@@ -21,18 +20,5 @@ describe('bailian video capabilities catalog', () => {
     const capabilities = findBuiltinCapabilities('video', 'bailian', 'wan2.7-i2v')
     expect(capabilities?.video?.generationModeOptions).toEqual(['normal', 'firstlastframe'])
     expect(capabilities?.video?.firstlastframe).toBe(true)
-  })
-
-  it('registers bailian kf2v models as firstlastframe-only', () => {
-    const models = [
-      'wan2.2-kf2v-flash',
-      'wanx2.1-kf2v-plus',
-    ]
-
-    for (const modelId of models) {
-      const capabilities = findBuiltinCapabilities('video', 'bailian', modelId)
-      expect(capabilities?.video?.generationModeOptions).toEqual(['firstlastframe'])
-      expect(capabilities?.video?.firstlastframe).toBe(true)
-    }
   })
 })

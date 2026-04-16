@@ -110,6 +110,7 @@ export const PRESET_MODELS: PresetModel[] = [
     { modelId: 'doubao-seed-1-6-251015', name: 'Doubao Seed 1.6', type: 'llm', provider: 'ark' },
     { modelId: 'doubao-seed-1-6-lite-251015', name: 'Doubao Seed 1.6 Lite', type: 'llm', provider: 'ark' },
     // 阿里云百炼文本模型
+    { modelId: 'qwen3.6-plus', name: 'Qwen 3.6 Plus', type: 'llm', provider: 'bailian' },
     { modelId: 'qwen3.5-plus', name: 'Qwen 3.5 Plus', type: 'llm', provider: 'bailian' },
     { modelId: 'qwen3.5-flash', name: 'Qwen 3.5 Flash', type: 'llm', provider: 'bailian' },
     // MiniMax 官方文本模型
@@ -132,6 +133,11 @@ export const PRESET_MODELS: PresetModel[] = [
     { modelId: 'imagen-4.0-generate-001', name: 'Imagen 4', type: 'image', provider: 'google' },
     { modelId: 'imagen-4.0-ultra-generate-001', name: 'Imagen 4 Ultra', type: 'image', provider: 'google' },
     { modelId: 'imagen-4.0-fast-generate-001', name: 'Imagen 4 Fast', type: 'image', provider: 'google' },
+    // 阿里云百炼图像模型
+    { modelId: 'wan2.7-image-pro', name: 'Wan2.7 Image Pro', type: 'image', provider: 'bailian' },
+    { modelId: 'wan2.7-image', name: 'Wan2.7 Image', type: 'image', provider: 'bailian' },
+    { modelId: 'wan2.6-image', name: 'Wan2.6 Image', type: 'image', provider: 'bailian' },
+
     // 视频模型
     { modelId: 'doubao-seedance-1-0-pro-fast-251015', name: 'Seedance 1.0 Pro Fast', type: 'video', provider: 'ark' },
     { modelId: 'doubao-seedance-1-0-lite-i2v-250428', name: 'Seedance 1.0 Lite', type: 'video', provider: 'ark' },
@@ -150,9 +156,6 @@ export const PRESET_MODELS: PresetModel[] = [
     { modelId: 'wan2.6-i2v-flash', name: 'Wan2.6 I2V Flash', type: 'video', provider: 'bailian' },
     { modelId: 'wan2.6-i2v', name: 'Wan2.6 I2V', type: 'video', provider: 'bailian' },
     { modelId: 'wan2.5-i2v-preview', name: 'Wan2.5 I2V Preview', type: 'video', provider: 'bailian' },
-    { modelId: 'wan2.2-i2v-plus', name: 'Wan2.2 I2V Plus', type: 'video', provider: 'bailian' },
-    { modelId: 'wan2.2-kf2v-flash', name: 'Wan2.2 KF2V Flash', type: 'video', provider: 'bailian' },
-    { modelId: 'wanx2.1-kf2v-plus', name: 'WanX2.1 KF2V Plus', type: 'video', provider: 'bailian' },
     { modelId: 'fal-wan25', name: 'Wan 2.6', type: 'video', provider: 'fal' },
     { modelId: 'fal-veo31', name: 'Veo 3.1', type: 'video', provider: 'fal' },
     { modelId: 'fal-sora2', name: 'Sora 2', type: 'video', provider: 'fal' },

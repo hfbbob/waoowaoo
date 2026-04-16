@@ -25,23 +25,19 @@ function assertRegistered(modelId: string): void {
   })
 }
 
-// 🔥 wan2.7-image 系列：multimodal-generation 端点
+// wan2.7-image 系列：multimodal-generation 端点
 const BAILIAN_IMAGE_MULTIMODAL_ENDPOINT = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation'
-// 🔥 wan2.7-image 系列异步端点
+// wan2.6-image：image-generation 异步端点
 const BAILIAN_IMAGE_ASYNC_ENDPOINT = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/image-generation/generation'
-// 旧版端点（wanx2.1 系列）
-const BAILIAN_IMAGE_TEXT2IMAGE_ENDPOINT = 'https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis'
 
-// wan2.7-image 系列使用 multimodal API
+// wan2.7-image 系列使用 multimodal-generation 同步端点（官方推荐）
 const BAILIAN_MULTIMODAL_IMAGE_MODELS = new Set([
   'wan2.7-image-pro',
   'wan2.7-image',
 ])
 
-// wan2.7-image 系列 + wan2.6-image 支持 async
+// wan2.6-image 使用 image-generation 异步端点
 const BAILIAN_ASYNC_IMAGE_MODELS = new Set([
-  'wan2.7-image-pro',
-  'wan2.7-image',
   'wan2.6-image',
 ])
 
@@ -123,9 +119,9 @@ function buildSubmitRequest(params: BailianImageGenerateParams): {
 
   // Parameters
   const parameters: Record<string, unknown> = {}
-  // 🔥 size 参数仅适用于 wanx2.1 系列，wan2.6/2.7-image 不支持
-  const isWanx21 = modelId.startsWith('wanx2.1')
-  if (isWanx21 && size) {
+  // wan2.7 系列: size 支持 "1K"/"2K"/"4K" 格式
+  // wan2.6-image: 不支持 size 参数
+  if (isMultimodal && size) {
     parameters.size = size
   }
   if (typeof n === 'number') {
@@ -145,14 +141,13 @@ function buildSubmitRequest(params: BailianImageGenerateParams): {
   }
 
   // 确定端点和模式
+  // wan2.7 系列: multimodal-generation 同步端点
+  // wan2.6-image: image-generation 异步端点
   const useAsync = supportsAsync(modelId)
-  // multimodal 模型使用异步端点（支持 messages 格式）
-  // 非 multimodal 但支持 async 的模型（如 wan2.6-image）也使用异步端点（支持 prompt 格式）
-  const endpoint = useAsync
-    ? BAILIAN_IMAGE_ASYNC_ENDPOINT
-    : (isMultimodal ? BAILIAN_IMAGE_MULTIMODAL_ENDPOINT : BAILIAN_IMAGE_TEXT2IMAGE_ENDPOINT)
+  const endpoint = isMultimodal
+    ? BAILIAN_IMAGE_MULTIMODAL_ENDPOINT
+    : BAILIAN_IMAGE_ASYNC_ENDPOINT
 
-  // 🔥 调试日志：打印提交给百炼的完整请求体
   _ulogInfo(`[Bailian Image Submit] model=${modelId}, endpoint=${endpoint}, useAsync=${useAsync}`)
   _ulogInfo(`[Bailian Image Submit] parameters: ${JSON.stringify(body.parameters)}`)
   _ulogInfo(`[Bailian Image Submit] input keys: ${Object.keys(body.input)}`)
@@ -187,24 +182,6 @@ async function parseMultimodalResponse(response: Response): Promise<{ imageUrl: 
 }
 
 async function parseAsyncSubmitResponse(response: Response): Promise<{ taskId: string }> {
-  const raw = await response.text()
-  if (!raw) throw new Error('BAILIAN_IMAGE_RESPONSE_EMPTY')
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>
-    if (parsed.code) {
-      throw new Error(`BAILIAN_IMAGE_SUBMIT_FAILED(${response.status}): ${parsed.message || parsed.code}`)
-    }
-    const output = parsed.output as Record<string, unknown> | undefined
-    const taskId = output?.task_id as string | undefined
-    if (!taskId) throw new Error('BAILIAN_IMAGE_TASK_ID_MISSING')
-    return { taskId }
-  } catch (e) {
-    if (e instanceof Error && e.message.startsWith('BAILIAN')) throw e
-    throw new Error('BAILIAN_IMAGE_RESPONSE_INVALID_JSON')
-  }
-}
-
-async function parseLegacySubmitResponse(response: Response): Promise<{ taskId: string }> {
   const raw = await response.text()
   if (!raw) throw new Error('BAILIAN_IMAGE_RESPONSE_EMPTY')
   try {

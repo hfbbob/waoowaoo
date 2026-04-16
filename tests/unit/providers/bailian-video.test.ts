@@ -127,60 +127,6 @@ describe('bailian video provider', () => {
     })
   })
 
-  it('submits kf2v task with first and last frame', async () => {
-    const fetchMock = vi.fn(async () => ({
-      ok: true,
-      status: 200,
-      text: async () => JSON.stringify({
-        output: {
-          task_id: 'task-kf2v-1',
-          task_status: 'PENDING',
-        },
-      }),
-    }))
-    vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch)
-
-    const result = await generateBailianVideo({
-      userId: 'user-1',
-      imageUrl: 'https://example.com/first.png',
-      prompt: '让人物从左走到右',
-      options: {
-        provider: 'bailian',
-        modelId: 'wan2.2-kf2v-flash',
-        modelKey: 'bailian::wan2.2-kf2v-flash',
-        lastFrameImageUrl: 'https://example.com/last.png',
-        duration: 5,
-      },
-    })
-
-    expect(fetchMock).toHaveBeenCalledTimes(1)
-    const firstCall = fetchMock.mock.calls[0] as unknown as [RequestInfo | URL, RequestInit] | undefined
-    expect(firstCall).toBeDefined()
-    if (!firstCall) {
-      throw new Error('missing fetch call')
-    }
-    const requestUrl = firstCall[0]
-    const requestInit = firstCall[1]
-    expect(requestUrl).toBe('https://dashscope.aliyuncs.com/api/v1/services/aigc/image2video/video-synthesis')
-    expect(requestInit.body).toBe(JSON.stringify({
-      model: 'wan2.2-kf2v-flash',
-      input: {
-        first_frame_url: 'https://example.com/first.png',
-        last_frame_url: 'https://example.com/last.png',
-        prompt: '让人物从左走到右',
-      },
-      parameters: {
-        duration: 5,
-      },
-    }))
-    expect(result).toEqual({
-      success: true,
-      async: true,
-      requestId: 'task-kf2v-1',
-      externalId: 'BAILIAN:VIDEO:task-kf2v-1',
-    })
-  })
-
   it('submits wan2.7 i2v task with first and last frame', async () => {
     const fetchMock = vi.fn(async () => ({
       ok: true,
@@ -226,26 +172,6 @@ describe('bailian video provider', () => {
       requestId: 'task-wan27-flf',
       externalId: 'BAILIAN:VIDEO:task-wan27-flf',
     })
-  })
-
-  it('fails fast when kf2v model misses last frame', async () => {
-    const fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock as unknown as typeof fetch)
-
-    await expect(
-      generateBailianVideo({
-        userId: 'user-1',
-        imageUrl: 'https://example.com/first.png',
-        prompt: 'test',
-        options: {
-          provider: 'bailian',
-          modelId: 'wanx2.1-kf2v-plus',
-          modelKey: 'bailian::wanx2.1-kf2v-plus',
-        },
-      }),
-    ).rejects.toThrow(/BAILIAN_VIDEO_LAST_FRAME_IMAGE_URL_REQUIRED/)
-
-    expect(fetchMock).not.toHaveBeenCalled()
   })
 
   it('fails fast when options contain unsupported field', async () => {

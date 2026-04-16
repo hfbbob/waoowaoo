@@ -1,6 +1,41 @@
 [
   {
     "modelType": "image",
+    "provider": "bailian",
+    "modelId": "wan2.7-image-pro",
+    "capabilities": {
+      "image": {
+        "resolutionOptions": [
+          "1K",
+          "2K",
+          "4K"
+        ]
+      }
+    }
+  },
+  {
+    "modelType": "image",
+    "provider": "bailian",
+    "modelId": "wan2.7-image",
+    "capabilities": {
+      "image": {
+        "resolutionOptions": [
+          "1K",
+          "2K"
+        ]
+      }
+    }
+  },
+  {
+    "modelType": "image",
+    "provider": "bailian",
+    "modelId": "wan2.6-image",
+    "capabilities": {
+      "image": {}
+    }
+  },
+  {
+    "modelType": "image",
     "provider": "fal",
     "modelId": "banana-2",
     "capabilities": {
@@ -768,48 +803,6 @@
           "normal"
         ],
         "firstlastframe": false,
-        "supportGenerateAudio": false
-      }
-    }
-  },
-  {
-    "modelType": "video",
-    "provider": "bailian",
-    "modelId": "wan2.2-i2v-plus",
-    "capabilities": {
-      "video": {
-        "generationModeOptions": [
-          "normal"
-        ],
-        "firstlastframe": false,
-        "supportGenerateAudio": false
-      }
-    }
-  },
-  {
-    "modelType": "video",
-    "provider": "bailian",
-    "modelId": "wan2.2-kf2v-flash",
-    "capabilities": {
-      "video": {
-        "generationModeOptions": [
-          "firstlastframe"
-        ],
-        "firstlastframe": true,
-        "supportGenerateAudio": false
-      }
-    }
-  },
-  {
-    "modelType": "video",
-    "provider": "bailian",
-    "modelId": "wanx2.1-kf2v-plus",
-    "capabilities": {
-      "video": {
-        "generationModeOptions": [
-          "firstlastframe"
-        ],
-        "firstlastframe": true,
         "supportGenerateAudio": false
       }
     }
