@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useLocale } from 'next-intl'
 import { type Locale } from '@/i18n/routing'
 import ConfirmDialog from './ConfirmDialog'
 import { AppIcon } from '@/components/ui/icons'
 import { usePathname, useRouter } from '@/i18n/navigation'
+import { useClickOutside } from '@/hooks/common/useClickOutside'
 
 const LANGUAGE_LABELS: Record<Locale, string> = {
     zh: '简体中文',
@@ -52,20 +53,7 @@ export default function LanguageSwitcher() {
     const activeLocaleForCopy: Locale = pendingLocale ?? targetLocale
     const confirmCopy = SWITCH_CONFIRM_COPY[activeLocaleForCopy]
 
-    useEffect(() => {
-        if (!isMenuOpen) return
-
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsMenuOpen(false)
-            }
-        }
-
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside)
-        }
-    }, [isMenuOpen])
+    useClickOutside([containerRef], () => setIsMenuOpen(false), isMenuOpen)
 
     const requestLanguageSwitch = (newLocale: Locale) => {
         setIsMenuOpen(false)

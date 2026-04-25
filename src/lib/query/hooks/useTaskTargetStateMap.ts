@@ -54,7 +54,7 @@ const taskTargetStateLogger = createScopedLogger({
 
 function traceFrontend(event: string, details: Record<string, unknown>) {
   if (typeof window === 'undefined') return
-  console.info(`[FE_TASK_TRACE] ${event}`, details)
+  taskTargetStateLogger.debug(`[FE_TASK_TRACE] ${event}`, details)
 }
 
 function stateKey(targetType: string, targetId: string) {
@@ -410,7 +410,7 @@ export function useTaskTargetStateMap(
       }
     }
     return map
-  }, [normalizedTargets, overlayQuery.data, query.data])
+  }, [normalizedTargets, overlayQuery.data, projectId, query.data])
 
   const mergedData = useMemo(() => {
     return normalizedTargets.map((target) =>

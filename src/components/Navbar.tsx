@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
@@ -21,18 +21,32 @@ export default function Navbar() {
   const [checkMsgFading, setCheckMsgFading] = useState(false)
   const [manualChecking, setManualChecking] = useState(false)
   const downloadLogsHref = '/api/admin/download-logs'
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([])
+
+  useEffect(() => {
+    const timers = timersRef.current
+    return () => {
+      timers.forEach(clearTimeout)
+    }
+  }, [])
+
+  const safeSetTimeout = useCallback((fn: () => void, ms: number) => {
+    const id = setTimeout(fn, ms)
+    timersRef.current.push(id)
+    return id
+  }, [])
 
   const handleCheckUpdate = async () => {
     setCheckMsg(null)
     setCheckMsgFading(false)
     setManualChecking(true)
-    const minSpin = new Promise(r => setTimeout(r, 1000))
+    const minSpin = new Promise<void>(resolve => safeSetTimeout(resolve, 1000))
     await Promise.all([checkNow(), minSpin])
     setManualChecking(false)
-    setTimeout(() => {
+    safeSetTimeout(() => {
       setCheckMsg('upToDate')
-      setTimeout(() => setCheckMsgFading(true), 2000)
-      setTimeout(() => { setCheckMsg(null); setCheckMsgFading(false) }, 3000)
+      safeSetTimeout(() => setCheckMsgFading(true), 2000)
+      safeSetTimeout(() => { setCheckMsg(null); setCheckMsgFading(false) }, 3000)
     }, 100)
   }
 

@@ -72,7 +72,7 @@ export function usePanelVideoModel({
   const [generationOptions, setGenerationOptions] = useState<VideoGenerationOptions>(() =>
     readSelectionForModel(capabilityOverrides, defaultVideoModel || ''),
   )
-  const videoModelOptions = userVideoModels ?? []
+  const videoModelOptions = useMemo(() => userVideoModels ?? [], [userVideoModels])
   const selectedOption = videoModelOptions.find((option) => option.value === selectedModel)
   const pricingTiers = useMemo(
     () => projectVideoPricingTiersByFixedSelections({

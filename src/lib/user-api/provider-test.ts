@@ -1,5 +1,8 @@
 import OpenAI from 'openai'
 import { setProxy } from '../../../lib/prompts/proxy'
+import { createScopedLogger } from '@/lib/logging/core'
+
+const logger = createScopedLogger({ module: 'user-api.provider-test' })
 
 export type TestStepName = 'models' | 'textGen' | 'imageGen' | 'credits' | 'audioGen'
 export type TestStepStatus = 'pass' | 'fail' | 'skip'
@@ -430,7 +433,7 @@ async function testArkProvider(apiKey: string): Promise<TestProviderResult> {
 
 async function testGoogleOfficial(apiKey: string): Promise<TestProviderResult> {
   await setProxy()
-  console.log('[provider-test] testGoogleOfficial')
+  logger.debug('testGoogleOfficial')
   const steps: TestStep[] = []
   const model = 'gemini-3-flash-preview'
 
@@ -584,7 +587,7 @@ async function testMiniMaxProvider(apiKey: string): Promise<TestProviderResult> 
 
 async function testFalProvider(apiKey: string): Promise<TestProviderResult> {
   await setProxy()
-  console.log('[provider-test] testFalProvider')
+  logger.debug('testFalProvider')
   const steps: TestStep[] = []
 
   // 🔥 使用免费的 GET /v1/models 端点验证 API Key，不消耗实际资源
@@ -630,7 +633,7 @@ async function testFalProvider(apiKey: string): Promise<TestProviderResult> {
 // ---------------------------------------------------------------------------
 
 async function testViduProvider(apiKey: string): Promise<TestProviderResult> {
-  console.log('[provider-test] testViduProvider')
+  logger.debug('testViduProvider')
   const steps: TestStep[] = []
 
   // 🔥 使用免费的 GET /ent/v2/credits 积分查询端点，不消耗任何资源

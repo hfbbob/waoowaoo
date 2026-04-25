@@ -211,7 +211,6 @@ export function CharacterCreationModal({
             handleClearReference={handleClearReference}
             handleExtractDescription={() => { void handleExtractDescription() }}
             handleAiDesign={() => { void handleAiDesign() }}
-            isSubmitting={isSubmitting}
             isAiDesigning={isAiDesigning}
             isExtracting={isExtracting}
           />

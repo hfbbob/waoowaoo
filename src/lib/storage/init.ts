@@ -1,5 +1,8 @@
 import { ensureStorageReady } from '@/lib/storage/bootstrap'
 import { requireEnv } from '@/lib/storage/utils'
+import { createScopedLogger } from '@/lib/logging/core'
+
+const logger = createScopedLogger({ module: 'storage:init' })
 
 async function main() {
   const result = await ensureStorageReady()
@@ -10,15 +13,14 @@ async function main() {
 
   const bucket = requireEnv('MINIO_BUCKET')
   if (result === 'created') {
-    console.log(`[storage:init] created MinIO bucket "${bucket}"`)
+    logger.info(`created MinIO bucket "${bucket}"`)
     return
   }
 
-  console.log(`[storage:init] verified MinIO bucket "${bucket}"`)
+  logger.info(`verified MinIO bucket "${bucket}"`)
 }
 
 void main().catch((error: unknown) => {
-  console.error('[storage:init] failed to prepare storage')
-  console.error(error)
+  logger.error('failed to prepare storage', error)
   process.exit(1)
 })

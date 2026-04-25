@@ -26,6 +26,14 @@ const eslintConfig = [
     files: ["src/**/*.{ts,tsx}"],
     ignores: ["src/components/ui/icons/**"],
     rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
       "no-restricted-imports": [
         "error",
         {

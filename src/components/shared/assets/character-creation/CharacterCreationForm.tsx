@@ -43,7 +43,6 @@ interface CharacterCreationFormProps {
   handleClearReference: (index?: number) => void
   handleExtractDescription: () => void
   handleAiDesign: () => void
-  isSubmitting: boolean
   isAiDesigning: boolean
   isExtracting: boolean
 }
@@ -84,7 +83,6 @@ export default function CharacterCreationForm({
   handleClearReference,
   handleExtractDescription,
   handleAiDesign,
-  isSubmitting,
   isAiDesigning,
   isExtracting,
 }: CharacterCreationFormProps) {

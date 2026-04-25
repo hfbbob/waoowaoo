@@ -35,7 +35,7 @@ export function PropCreationModal({
   const [name, setName] = useState('')
   const [summary, setSummary] = useState('')
   const [description, setDescription] = useState('')
-  const [artStyle, setArtStyle] = useState('american-comic')
+  const [artStyle] = useState('american-comic')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const submittingState = isSubmitting
     ? resolveTaskPresentationState({
