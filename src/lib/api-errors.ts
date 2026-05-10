@@ -355,7 +355,8 @@ async function extractRouteContext<TParams extends RouteParams>(
   let params: Record<string, unknown> = {}
   try {
     params = (await ctx.params) || {}
-  } catch {}
+  } catch {
+  }
 
   const projectId =
     (typeof params.projectId === 'string' && params.projectId) ||

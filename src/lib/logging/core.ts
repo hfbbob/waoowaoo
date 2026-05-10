@@ -67,8 +67,14 @@ function parseLogArgs(args: unknown[]): { message: string; details: Record<strin
   }
 
   const [first, ...rest] = args
-  const maybeError = [...args].find((item) => item instanceof Error)
-  const error = maybeError ? serializeError(maybeError) : undefined
+  let maybeError: unknown
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] instanceof Error) {
+      maybeError = args[i]
+      break
+    }
+  }
+  const error = maybeError instanceof Error ? serializeError(maybeError) : undefined
 
   if (typeof first === 'string') {
     return {
@@ -85,13 +91,11 @@ function parseLogArgs(args: unknown[]): { message: string; details: Record<strin
   }
 }
 
+const CHINA_OFFSET_MS = 8 * 60 * 60 * 1000
+
 function nowChinaISOString(): string {
-  const now = new Date()
-  // UTC+8 偏移量（毫秒）
-  const offsetMs = 8 * 60 * 60 * 1000
-  const cstTime = new Date(now.getTime() + offsetMs)
-  // toISOString() 返回 UTC 格式，替换 Z 为 +08:00 即为北京时间
-  return cstTime.toISOString().replace('Z', '+08:00')
+  const now = Date.now()
+  return new Date(now + CHINA_OFFSET_MS).toISOString().replace('Z', '+08:00')
 }
 
 function write(level: LogLevel, event: Omit<LogEvent, 'ts' | 'level' | 'service'>): void {

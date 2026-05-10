@@ -67,13 +67,25 @@ async function getNodeModules(): Promise<NodeModules | null> {
 }
 
 // ─── project-name cache ───────────────────────────────────────────────
+const PROJECT_NAME_CACHE_MAX = 500
 const projectNameCache = new Map<string, string>()
 const pendingLookups = new Set<string>()
+
+function evictProjectNameCacheIfNeeded(): void {
+    if (projectNameCache.size <= PROJECT_NAME_CACHE_MAX) return
+    const keys = projectNameCache.keys()
+    const excess = projectNameCache.size - PROJECT_NAME_CACHE_MAX
+    for (let i = 0; i < excess; i++) {
+        const key = keys.next().value
+        if (key !== undefined) projectNameCache.delete(key)
+    }
+}
 
 /** Register a known projectId → projectName mapping. */
 export function registerProjectName(projectId: string, projectName: string): void {
     if (projectId && projectName) {
         projectNameCache.set(projectId, projectName)
+        evictProjectNameCacheIfNeeded()
     }
 }
 
@@ -123,14 +135,11 @@ async function appendLineAsync(filePath: string, line: string): Promise<void> {
     if (!modules) return
 
     try {
-        // Ensure the logs directory exists
         const dir = modules.path.dirname(filePath)
-        modules.fs.mkdirSync(dir, { recursive: true })
-        modules.fs.appendFileSync(filePath, line + '\n')
-        // 写入后异步检查是否需要清理（fire-and-forget）
+        await modules.fs.promises.mkdir(dir, { recursive: true })
+        await modules.fs.promises.appendFile(filePath, line + '\n')
         void maybeCleanupProjectLog(filePath)
     } catch (err) {
-        // Do not propagate, but surface so file-write failures are visible.
         console.error('[file-writer] Failed to write log line to', filePath, err)
     }
 }
@@ -174,13 +183,12 @@ async function maybeCleanupProjectLog(filePath: string): Promise<void> {
     const modules = await getNodeModules()
     if (!modules) return
     try {
-        const stat = modules.fs.statSync(filePath)
+        const stat = await modules.fs.promises.stat(filePath)
         if (stat.size <= PROJECT_LOG_MAX_BYTES) return
-        const content = modules.fs.readFileSync(filePath, 'utf-8')
+        const content = await modules.fs.promises.readFile(filePath, 'utf-8')
         const cleaned = filterRecentLines(content)
-        modules.fs.writeFileSync(filePath, cleaned + '\n')
+        await modules.fs.promises.writeFile(filePath, cleaned + '\n')
     } catch {
-        // 文件不存在或读写失败，忽略
     }
 }
 
@@ -194,6 +202,7 @@ function getPrefix(module?: string): string {
 // ─── buffered events ─────────────────────────────────────────────────
 // When a log event arrives before the project name is resolved we buffer
 // it so it can be flushed once the name becomes available.
+const BUFFERED_LINES_MAX_PER_PROJECT = 200
 const bufferedLines = new Map<string, string[]>()
 
 async function flushBuffer(projectId: string, projectName: string): Promise<void> {
@@ -257,6 +266,9 @@ export async function writeLogToProjectFile(
 
     // Name not yet available – buffer the line
     const buf = bufferedLines.get(projectId) || []
+    if (buf.length >= BUFFERED_LINES_MAX_PER_PROJECT) {
+        buf.shift()
+    }
     buf.push(`${prefix}|${line}`)
     bufferedLines.set(projectId, buf)
 }
@@ -285,22 +297,20 @@ export async function writeGlobalLogLine(line: string): Promise<void> {
 
     const filePath = modules.path.join(modules.cwd, 'logs', 'app.log')
     try {
-        modules.fs.mkdirSync(modules.path.dirname(filePath), { recursive: true })
+        await modules.fs.promises.mkdir(modules.path.dirname(filePath), { recursive: true })
 
-        // Auto-rotate: if file exceeds limit, keep only the last half
         try {
-            const stat = modules.fs.statSync(filePath)
+            const stat = await modules.fs.promises.stat(filePath)
             if (stat.size > GLOBAL_LOG_MAX_BYTES) {
-                const content = modules.fs.readFileSync(filePath, 'utf-8')
+                const content = await modules.fs.promises.readFile(filePath, 'utf-8')
                 const lines = content.split('\n')
                 const half = Math.floor(lines.length / 2)
-                modules.fs.writeFileSync(filePath, lines.slice(half).join('\n'))
+                await modules.fs.promises.writeFile(filePath, lines.slice(half).join('\n'))
             }
         } catch {
-            // File may not exist yet, that's fine
         }
 
-        modules.fs.appendFileSync(filePath, line + '\n')
+        await modules.fs.promises.appendFile(filePath, line + '\n')
     } catch (err) {
         console.error('[file-writer] Failed to write global log line', err)
     }
@@ -324,18 +334,18 @@ export async function getLogFilesList(): Promise<LogFileInfo[]> {
 
     const logsDir = modules.path.join(modules.cwd, 'logs')
     try {
-        const files = modules.fs.readdirSync(logsDir)
-        return files
-            .filter((f: string) => f.endsWith('.log'))
-            .map((f: string) => {
-                const stat = modules.fs.statSync(modules.path.join(logsDir, f))
-                return {
-                    name: f,
-                    sizeBytes: stat.size,
-                    modifiedAt: stat.mtime.toISOString(),
-                }
+        const files = await modules.fs.promises.readdir(logsDir)
+        const results: LogFileInfo[] = []
+        for (const f of files) {
+            if (!f.endsWith('.log')) continue
+            const stat = await modules.fs.promises.stat(modules.path.join(logsDir, f))
+            results.push({
+                name: f,
+                sizeBytes: stat.size,
+                modifiedAt: stat.mtime.toISOString(),
             })
-            .sort((a: LogFileInfo, b: LogFileInfo) => b.modifiedAt.localeCompare(a.modifiedAt))
+        }
+        return results.sort((a, b) => b.modifiedAt.localeCompare(a.modifiedAt))
     } catch {
         return []
     }
@@ -351,12 +361,12 @@ export async function readAllLogs(): Promise<string> {
 
     const logsDir = modules.path.join(modules.cwd, 'logs')
     try {
-        const files = modules.fs.readdirSync(logsDir)
+        const files = (await modules.fs.promises.readdir(logsDir))
             .filter((f: string) => f.endsWith('.log'))
             .sort()
         const sections: string[] = []
         for (const f of files) {
-            const content = modules.fs.readFileSync(modules.path.join(logsDir, f), 'utf-8')
+            const content = await modules.fs.promises.readFile(modules.path.join(logsDir, f), 'utf-8')
             sections.push(`\n========== ${f} ==========\n${content}`)
         }
         return sections.join('\n')
@@ -375,19 +385,17 @@ export async function cleanupAllProjectLogs(): Promise<void> {
 
     const logsDir = modules.path.join(modules.cwd, 'logs')
     try {
-        const files = modules.fs.readdirSync(logsDir)
+        const files = await modules.fs.promises.readdir(logsDir)
         for (const f of files) {
             if (!f.endsWith('.log') || f === 'app.log') continue
             const filePath = modules.path.join(logsDir, f)
             try {
-                const content = modules.fs.readFileSync(filePath, 'utf-8')
+                const content = await modules.fs.promises.readFile(filePath, 'utf-8')
                 const cleaned = filterRecentLines(content)
-                modules.fs.writeFileSync(filePath, cleaned + '\n')
+                await modules.fs.promises.writeFile(filePath, cleaned + '\n')
             } catch {
-                // 单个文件失败不影响其他
             }
         }
     } catch {
-        // logs 目录不存在等情况，忽略
     }
 }

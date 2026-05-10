@@ -3,14 +3,13 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { logAuthAction } from './logging/semantic'
 import { prisma } from './prisma'
+import type { NextAuthOptions } from "next-auth"
+import type { JWT } from "next-auth/jwt"
+import type { Session } from "next-auth"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const authOptions: any = {
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
-  // 🔥 允许从任意 Host 访问（解决局域网访问问题）
   trustHost: true,
-  // 🔥 根据 URL 协议决定是否使用 Secure Cookie
-  // 局域网 HTTP 访问时需要关闭，否则 Cookie 无法设置
   useSecureCookies: (process.env.NEXTAUTH_URL || '').startsWith('https://'),
   providers: [
     CredentialsProvider({
@@ -36,7 +35,6 @@ export const authOptions: any = {
           return null
         }
 
-        // 验证密码
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
 
         if (!isPasswordValid) {
@@ -60,15 +58,13 @@ export const authOptions: any = {
     signIn: "/auth/signin",
   },
   callbacks: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async jwt({ token, user }: any) {
-      if (user) {
+    async jwt({ token, user }: { token: JWT; user?: { id?: string } }) {
+      if (user?.id) {
         token.id = user.id
       }
       return token
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    async session({ session, token }: any) {
+    async session({ session, token }: { session: Session; token: JWT & { id?: string } }) {
       if (token && session.user) {
         session.user.id = token.id as string
       }
