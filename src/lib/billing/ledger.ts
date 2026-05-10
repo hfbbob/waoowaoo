@@ -166,6 +166,9 @@ export async function freezeBalance(
       })
 
       return freezeId
+    }, {
+      maxWait: 5_000,
+      timeout: 10_000,
     })
 
     return result
@@ -317,6 +320,9 @@ export async function rollbackFreeze(freezeId: string): Promise<boolean> {
           frozenAmount: { decrement: freezeAmount },
         },
       })
+    }, {
+      maxWait: 5_000,
+      timeout: 10_000,
     })
 
     return true
@@ -381,6 +387,9 @@ export async function increasePendingFreezeAmount(freezeId: string, delta: numbe
         throw new BillingOperationError('BILLING_FREEZE_NOT_PENDING', 'Freeze is not pending', { freezeId })
       }
       return true
+    }, {
+      maxWait: 5_000,
+      timeout: 10_000,
     })
 
     return result

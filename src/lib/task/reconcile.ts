@@ -33,6 +33,9 @@ const PROCESSING_TIMEOUT_MS = 5 * 60_000
 /** 每次对账扫描上限 */
 const RECONCILE_BATCH_SIZE = 200
 
+/** 对账并发检查上限 */
+const RECONCILE_CONCURRENCY = 10
+
 /** terminal 态短暂竞态保护窗口，避免 worker 刚结束时被误判为孤儿任务 */
 const TERMINAL_RECONCILE_GRACE_MS = 90_000
 
@@ -176,30 +179,43 @@ export async function reconcileActiveTasks(): Promise<string[]> {
     if (activeTasks.length === 0) return []
 
     const reconciled: string[] = []
-    for (const task of activeTasks) {
-        const jobState = await getJobState(task.id)
-        if (jobState === 'alive') continue
-        if (
-            jobState === 'terminal'
-            && now - task.updatedAt.getTime() < TERMINAL_RECONCILE_GRACE_MS
-        ) {
-            continue
-        }
-        if (
-            jobState === 'missing'
-            && now - task.updatedAt.getTime() < MISSING_RECONCILE_GRACE_MS
-        ) {
-            continue
-        }
+    const batches: typeof activeTasks[] = []
+    for (let i = 0; i < activeTasks.length; i += RECONCILE_CONCURRENCY) {
+        batches.push(activeTasks.slice(i, i + RECONCILE_CONCURRENCY))
+    }
 
-        const reason =
-            jobState === 'terminal'
-                ? 'Queue job already terminated but DB was not updated'
-                : 'Queue job missing (likely lost during restart)'
+    for (const batch of batches) {
+        const results = await Promise.allSettled(
+            batch.map(async (task) => {
+                const jobState = await getJobState(task.id)
+                if (jobState === 'alive') return null
+                if (
+                    jobState === 'terminal'
+                    && now - task.updatedAt.getTime() < TERMINAL_RECONCILE_GRACE_MS
+                ) {
+                    return null
+                }
+                if (
+                    jobState === 'missing'
+                    && now - task.updatedAt.getTime() < MISSING_RECONCILE_GRACE_MS
+                ) {
+                    return null
+                }
 
-        const failed = await failOrphanedTask(task, reason)
-        if (failed) {
-            reconciled.push(task.id)
+                const reason =
+                    jobState === 'terminal'
+                        ? 'Queue job already terminated but DB was not updated'
+                        : 'Queue job missing (likely lost during restart)'
+
+                const failed = await failOrphanedTask(task, reason)
+                return failed ? task.id : null
+            }),
+        )
+
+        for (const result of results) {
+            if (result.status === 'fulfilled' && result.value) {
+                reconciled.push(result.value)
+            }
         }
     }
 

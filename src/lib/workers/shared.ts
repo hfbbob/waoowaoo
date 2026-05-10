@@ -327,7 +327,13 @@ export async function withTaskLifecycle(job: Job<TaskJobData>, handler: (job: Jo
   void resolveProjectNameForLogging(data.projectId)
 
   const heartbeatTimer = setInterval(() => {
-    void touchTaskHeartbeat(taskId)
+    void touchTaskHeartbeat(taskId).catch((err) => {
+      logger.error({
+        action: 'worker.heartbeat.error',
+        message: 'heartbeat touch failed',
+        details: { error: String(err) },
+      })
+    })
   }, 10_000)
 
   try {

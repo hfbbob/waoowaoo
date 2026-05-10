@@ -23,22 +23,28 @@ export async function* withStreamChunkTimeout<T>(
     timeoutMs: number = DEFAULT_STREAM_CHUNK_TIMEOUT_MS,
 ): AsyncGenerator<T> {
     const iterator = source[Symbol.asyncIterator]()
-    while (true) {
-        const result = await Promise.race([
-            iterator.next(),
-            new Promise<never>((_, reject) => {
-                const timer = setTimeout(
-                    () => reject(new StreamChunkTimeoutError(timeoutMs)),
-                    timeoutMs,
-                )
-                // Prevent the timer from keeping Node alive if the iterator
-                // completes before the timeout fires.
-                if (typeof timer === 'object' && 'unref' in timer) {
-                    timer.unref()
-                }
-            }),
-        ])
-        if (result.done) return
-        yield result.value
+    try {
+        while (true) {
+            let timer: ReturnType<typeof setTimeout> | undefined
+            const result = await Promise.race([
+                iterator.next(),
+                new Promise<never>((_, reject) => {
+                    timer = setTimeout(
+                        () => reject(new StreamChunkTimeoutError(timeoutMs)),
+                        timeoutMs,
+                    )
+                    if (typeof timer === 'object' && 'unref' in timer) {
+                        timer.unref()
+                    }
+                }),
+            ])
+            if (timer !== undefined) clearTimeout(timer)
+            if (result.done) return
+            yield result.value
+        }
+    } finally {
+        if (typeof iterator.return === 'function') {
+            await iterator.return(undefined)
+        }
     }
 }
