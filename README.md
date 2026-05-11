@@ -21,7 +21,7 @@
 > [!IMPORTANT]
 > ⚠️ **测试版声明**：本项目目前处于测试初期阶段，由于暂时只有我一个人开发，存在部分 bug 和不完善之处。我们正在快速迭代更新中，**欢迎进群反馈问题和需求，及时关注项目更新！目前更新会非常频繁，后续会增加大量新功能以及优化效果，我们的目标是成为行业最强AI工具！**
 
-<img src="https://github.com/user-attachments/assets/2b3fc495-9812-493a-8dbc-5bec4757df31" width="30%">
+<img src="https://github.com/user-attachments/assets/d190bf41-488d-47df-a5df-06346ef0f2f5" width="30%">
 
 ---
 ## ✨ 功能特性
